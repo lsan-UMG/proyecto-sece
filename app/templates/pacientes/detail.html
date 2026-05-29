@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}SECE — {{ paciente.nombre_completo }}{% endblock %}
+{% block page_title %}Expediente clínico{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="/">Inicio</a></li>
+    <li class="breadcrumb-item"><a href="/pacientes">Pacientes</a></li>
+    <li class="breadcrumb-item active">{{ paciente.nombre_completo }}</li>
+  </ol>
+</nav>
+
+<div class="content-card mb-4">
+  <div class="p-4">
+    <div class="d-flex align-items-center gap-3">
+      <div class="patient-avatar">
+        {{ paciente.nombre_completo.split()[0][0] }}{{ paciente.nombre_completo.split()[-1][0] if paciente.nombre_completo.split()|length > 1 else '' }}
+      </div>
+      <div>
+        <div style="font-weight:700;font-size:1.05rem;color:#111827">{{ paciente.nombre_completo }}</div>
+        <div style="font-size:.8rem;color:#6b7280;margin-top:2px">
+          {{ paciente.codigo_expediente }}
+          &nbsp;·&nbsp;
+          {{ 'Masculino' if paciente.sexo.value == 'M' else 'Femenino' }}
+          &nbsp;·&nbsp;
+          {% set age = today.year - paciente.fecha_nacimiento.year - ((today.month, today.day) < (paciente.fecha_nacimiento.month, paciente.fecha_nacimiento.day)) %}
+          {{ age }} años
+        </div>
+      </div>
+      <div class="ms-auto d-flex gap-2">
+        {% if user.rol.value == 'MEDICO' %}
+        <a href="/consultas/crear?paciente_id={{ paciente.id }}" class="btn btn-sece btn-sm">+ Nueva consulta</a>
+        {% endif %}
+        {% if user.rol.value in ['RECEPCIONISTA', 'ADMIN'] %}
+        <a href="/pacientes/{{ paciente.id }}/editar" class="btn btn-outline-secondary btn-sm">Editar</a>
+        {% endif %}
+        {% if user.rol.value == 'ADMIN' %}
+        <form method="post" action="/pacientes/{{ paciente.id }}/eliminar" onsubmit="return confirm('¿Eliminar a {{ paciente.nombre_completo }}? Esta acción no se puede deshacer.')">
+          <button type="submit" class="btn btn-outline-danger btn-sm">Eliminar</button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<ul class="nav nav-tabs mb-0" id="expTabs">
+  <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#tab-datos">Datos generales</a></li>
+  <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-consultas">Consultas ({{ historial|length }})</a></li>
+</ul>
+
+<div class="tab-content content-card" style="border-top:none;border-radius:0 0 8px 8px">
+  <div class="tab-pane fade show active p-4" id="tab-datos">
+    <div class="row g-4">
+      <div class="col-md-6">
+        <div class="form-section-title">Identificación</div>
+        <table class="table table-sm">
+          <tr><th style="width:40%">DPI</th><td>{{ paciente.dpi }}</td></tr>
+          <tr><th>Fecha nacimiento</th><td>{{ paciente.fecha_nacimiento.strftime('%d/%m/%Y') }}</td></tr>
+          <tr><th>Sexo</th><td>{{ 'Masculino' if paciente.sexo.value == 'M' else 'Femenino' }}</td></tr>
+        </table>
+      </div>
+      <div class="col-md-6">
+        <div class="form-section-title">Contacto</div>
+        <table class="table table-sm">
+          <tr><th style="width:40%">Teléfono</th><td>{{ paciente.telefono or '—' }}</td></tr>
+          <tr><th>Correo</th><td>{{ paciente.email or '—' }}</td></tr>
+          <tr><th>Dirección</th><td>{{ paciente.direccion or '—' }}</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-pane fade" id="tab-consultas">
+    {% if historial %}
+    <table class="table mb-0">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Médico</th>
+          <th>Diagnóstico</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in historial %}
+        <tr>
+          <td>{{ c.fecha_consulta.strftime('%d/%m/%Y %H:%M') }}</td>
+          <td>{{ c.medico_nombre }}</td>
+          <td>{{ c.diagnostico or '—' }}</td>
+          <td><a href="/consultas/{{ c.id }}" class="btn btn-outline-secondary btn-sm">Ver detalle</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="p-4 text-muted" style="font-size:.85rem">Este paciente no tiene consultas registradas.</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

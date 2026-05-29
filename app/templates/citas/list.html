@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}SECE — Citas{% endblock %}
+{% block page_title %}Citas{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="/">Inicio</a></li>
+    <li class="breadcrumb-item active">Citas</li>
+  </ol>
+</nav>
+
+<div class="content-card">
+  <div class="content-card-header">
+    <form class="d-flex gap-2 align-items-center flex-wrap" method="get">
+      <label class="form-label mb-0" style="font-size:.82rem;color:#374151">Fecha:</label>
+      <input type="date" name="fecha" class="form-control form-control-sm" style="width:170px"
+             value="{{ fecha }}" {% if todas %}disabled{% endif %}>
+      <button type="submit" class="btn btn-sece btn-sm" {% if todas %}disabled{% endif %}>Ver</button>
+      <a href="/citas" class="btn btn-outline-secondary btn-sm {% if not todas %}active{% endif %}">Hoy</a>
+      <a href="/citas?todas=1" class="btn btn-outline-secondary btn-sm {% if todas %}active{% endif %}">Todas</a>
+    </form>
+    {% if user.rol.value in ['RECEPCIONISTA', 'ADMIN'] %}
+    <a href="/citas/crear" class="btn btn-sece btn-sm">+ Nueva cita</a>
+    {% endif %}
+  </div>
+
+  {% if citas %}
+  <div class="table-responsive">
+    <table class="table mb-0">
+      <thead>
+        <tr>
+          <th>{% if todas %}Fecha y hora{% else %}Hora{% endif %}</th>
+          <th>Paciente</th>
+          <th>Médico</th>
+          <th>Estado</th>
+          <th>Motivo</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in citas %}
+        <tr>
+          <td>{% if todas %}{{ c.fecha_hora.strftime('%d/%m/%Y %H:%M') }}{% else %}{{ c.fecha_hora.strftime('%H:%M') }}{% endif %}</td>
+          <td>{{ c.paciente.nombre_completo }}</td>
+          <td>{{ c.medico.usuario.nombre }}</td>
+          <td>
+            {% if c.estado.value == 'PROGRAMADA' %}
+            <span class="badge-prog">Programada</span>
+            {% elif c.estado.value == 'COMPLETADA' %}
+            <span class="badge-comp">Completada</span>
+            {% else %}
+            <span class="badge-canc">Cancelada</span>
+            {% endif %}
+          </td>
+          <td>{{ c.motivo or '—' }}</td>
+          <td class="d-flex gap-1 flex-wrap">
+            {% if c.estado.value == 'PROGRAMADA' %}
+            <a href="/citas/{{ c.id }}/editar" class="btn btn-outline-secondary btn-sm">Editar</a>
+            {% if user.rol.value == 'MEDICO' %}
+            <a href="/consultas/crear?cita_id={{ c.id }}" class="btn btn-sece btn-sm">Consultar</a>
+            {% endif %}
+            {% endif %}
+            {% if c.estado.value != 'COMPLETADA' and user.rol.value in ['RECEPCIONISTA', 'ADMIN'] %}
+            <form method="post" action="/citas/{{ c.id }}/eliminar" onsubmit="return confirm('¿Eliminar esta cita?')">
+              <button type="submit" class="btn btn-outline-danger btn-sm">Eliminar</button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="p-4 text-muted" style="font-size:.85rem">
+    {% if todas %}No hay citas registradas.{% else %}No hay citas para el {{ fecha }}.{% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
