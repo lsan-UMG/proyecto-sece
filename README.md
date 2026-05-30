@@ -8,6 +8,9 @@ FastAPI · SQLAlchemy 2.0 async · PostgreSQL 15 · Alembic · JWT + bcrypt
 # Instalar dependencias
 uv sync
 
+# Inicializar Docker para desarrollo local
+docker compose up -d
+
 # Aplicar migraciones (PostgreSQL debe estar en ejecución)
 uv run alembic upgrade head
 
