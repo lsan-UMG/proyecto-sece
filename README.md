@@ -1,4 +1,4 @@
-# SECE — Sistema de Expediente Clínico Electrónico
+# SECE: Sistema de Expediente Clínico Electrónico
 
 FastAPI · SQLAlchemy 2.0 async · PostgreSQL 15 · Alembic · JWT + bcrypt
 
